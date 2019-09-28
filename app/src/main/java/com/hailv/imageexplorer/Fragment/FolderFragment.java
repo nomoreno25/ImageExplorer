@@ -1,19 +1,15 @@
 package com.hailv.imageexplorer.Fragment;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
+
 import com.hailv.imageexplorer.Adapter.FolderAdapter;
 import com.hailv.imageexplorer.R;
 
@@ -23,7 +19,12 @@ import java.util.Collections;
 import java.util.HashSet;
 
 public class FolderFragment extends Fragment {
-    private ArrayList<String> fileList = new ArrayList<String>();
+    public static ArrayList<String> fileList = new ArrayList<String>();
+    private Context context;
+
+    public FolderFragment() {
+        // Required empty public constructor
+    }
 
     @Nullable
     @Override
@@ -31,17 +32,10 @@ public class FolderFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_folder, container, false);
 
         //Set layout recyclerview
-        RecyclerView mRecyclerView = view.findViewById(R.id.recyclerView_folder);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        ListView mRecyclerView = view.findViewById(R.id.listView_folder);
         //Lay danh sach folder path
         File root = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
         getFile(root);
-        //Loc ra ten folder
-//        for (int i = 0; i < fileList.size(); i++) {
-//            String thumucpath = fileList.get(i).substring(fileList.get(i).lastIndexOf("/")+1);
-//            listThumuc.add(thumucpath);
-//        }
-        //Loai bo folder trung ten
         HashSet<String> hashSet = new HashSet<String>();
         hashSet.addAll(fileList);
         fileList.clear();

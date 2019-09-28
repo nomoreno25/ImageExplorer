@@ -1,39 +1,27 @@
 package com.hailv.imageexplorer.Modal;
 
 public class ImageDataModel {
-    private String imageTitle , imagePath;
+    private String imagePath, imageDate;
 
-    /**
-     * @return the imageTitle
-     */
-    public String getImageTitle() {
-        return imageTitle;
+    public String getImageDate() {
+        return imageDate;
     }
 
-    /**
-     * @param imageTitle the imageTitle to set
-     */
-    public void setImageTitle(String imageTitle) {
-        this.imageTitle = imageTitle;
+    public void setImageDate(String imageDate) {
+        this.imageDate = imageDate;
     }
 
-    /**
-     * @return the imagePath
-     */
     public String getImagePath() {
         return imagePath;
     }
 
-    /**
-     * @param imagePath the imagePath to set
-     */
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
     }
 
-    public ImageDataModel(String imageTitle, String imagePath) {
+    public ImageDataModel(String imagePath, String imageDate) {
         super();
-        this.imageTitle = imageTitle;
+        this.imageDate = imageDate;
         this.imagePath = imagePath;
     }
 }

@@ -21,14 +21,20 @@ import com.hailv.imageexplorer.Modal.ImageDataModel;
 import com.hailv.imageexplorer.R;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Locale;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class AllFragment extends Fragment{
     public static ArrayList<ImageDataModel> allImages = new ArrayList<ImageDataModel>();
-    private ArrayList<String> resultIAV = new ArrayList<String>();
-    private ArrayList<String> fileList = new ArrayList<String>();
+    public static ArrayList<ImageDataModel> fileList = new ArrayList<ImageDataModel>();
+    File file;
 
     @Nullable
     @Override
@@ -39,165 +45,99 @@ public class AllFragment extends Fragment{
         RecyclerView mRecyclerView = view.findViewById(R.id.recyclerView_all);
         mRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 3));
 
-        File root = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-        getFile(root);
+        file = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
+        getFile(file);
 
 //        getFilePaths();
-        for (int i = 0; i < fileList.size(); i++) {
-            String stringFile = fileList.get(i);
-            Log.e("TEST", stringFile);
+        for (int i = 0; i < allImages.size(); i++) {
+            ImageDataModel imageDataModel = allImages.get(i);
+            fileList.add(new ImageDataModel(imageDataModel.getImagePath(), imageDataModel.getImageDate()));
         }
-
+        Collections.sort(fileList, new StringDateComparator());
+//        MainActivity.progressBar.setVisibility(View.GONE);
         AllAdapter mAdapter = new AllAdapter(getContext(), fileList);
+        mRecyclerView.hasFixedSize();
         mRecyclerView.setAdapter(mAdapter);
         return view;
     }
 
-    public static ArrayList<ImageDataModel> gettAllImages(Context activity) {
+    class StringDateComparator implements Comparator<ImageDataModel> {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
 
-        //Remove older images to avoid copying same image twice
+        public int compare(ImageDataModel s1, ImageDataModel s2) {
+            Date d1 = null;
+            Date d2 = null;
+            try {
+                d1 = dateFormat.parse(s1.getImageDate());
+                d2 = dateFormat.parse(s2.getImageDate());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
 
-        allImages.clear();
-        Uri uri;
-        Cursor cursor;
-        int column_index_data, column_index_folder_name;
-
-        String absolutePathOfImage = null, imageName;
-
-        //get all images from external storage
-
-        uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-
-        String[] projection = { MediaStore.MediaColumns.DATA,
-                MediaStore.Images.Media.DISPLAY_NAME };
-
-        cursor = activity.getContentResolver().query(uri, projection, null,
-                null, null);
-
-        column_index_data = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-
-        column_index_folder_name = cursor
-                .getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
-
-        while (cursor.moveToNext()) {
-
-            absolutePathOfImage = cursor.getString(column_index_data);
-
-            imageName = cursor.getString(column_index_folder_name);
-
-            allImages.add(new ImageDataModel(imageName, absolutePathOfImage));
-
+            if (d1.getTime() == d2.getTime())
+                return 0;
+            else if (d1.getTime() < d2.getTime())
+                return 1;
+            else
+                return -1;
         }
-
-        // Get all Internal storage images
-
-        uri = android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI;
-
-        cursor = activity.getContentResolver().query(uri, projection, null,
-                null, null);
-
-        column_index_data = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-
-        column_index_folder_name = cursor
-                .getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
-
-        while (cursor.moveToNext()) {
-
-            absolutePathOfImage = cursor.getString(column_index_data);
-
-            imageName = cursor.getString(column_index_folder_name);
-
-            allImages.add(new ImageDataModel(imageName, absolutePathOfImage));
-        }
-
-        return allImages;
     }
 
-    public ArrayList<String> getFilePaths() {
-        Uri u = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = {MediaStore.Images.ImageColumns.DATA};
-        Cursor c = null;
-        SortedSet<String> dirList = new TreeSet<String>();
-//        ArrayList<String> resultIAV = new ArrayList<String>();
+    public void getFile(File dir) {
 
-        String[] directories = null;
-        if (u != null)
-        {
-            c = getContext().getContentResolver().query(u, projection, null, null, null);
-        }
-        if ((c != null) && (c.moveToFirst()))
-        {
-            do
-            {
-                String tempDir = c.getString(0);
-                tempDir = tempDir.substring(0, tempDir.lastIndexOf("/"));
-                try{
-                    dirList.add(tempDir);
-                }
-                catch(Exception e)
-                {
-                }
-            }
-            while (c.moveToNext());
-            directories = new String[dirList.size()];
-            dirList.toArray(directories);
-        }
-        for(int i=0;i<dirList.size();i++)
-        {
-            File imageDir = new File(directories[i]);
-            File[] imageList = imageDir.listFiles();
-            if(imageList == null)
-                continue;
-            for (File imagePath : imageList) {
-                try {
-
-                    if(imagePath.isDirectory())
-                    {
-                        imageList = imagePath.listFiles();
-                    }
-                    if ( imagePath.getName().endsWith(".png")|| imagePath.getName().endsWith(".PNG")
-                            || imagePath.getName().endsWith(".jpg")|| imagePath.getName().endsWith(".JPG")
-                            || imagePath.getName().endsWith(".jpeg") || imagePath.getName().endsWith(".JPEG")
-                            || imagePath.getName().endsWith(".gif") || imagePath.getName().endsWith(".GIF")
-                            || imagePath.getName().endsWith(".bmp") || imagePath.getName().endsWith(".BMP")
-                            || imagePath.getName().endsWith(".webp") || imagePath.getName().endsWith(".WEBP")
-                    )
-                    {
-                        String path= imagePath.getAbsolutePath();
-                        resultIAV.add(path);
-                    }
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return resultIAV;
-    }
-
-    public ArrayList<String> getFile(File dir) {
         File listFile[] = dir.listFiles();
         if (listFile != null && listFile.length > 0) {
-            for (File file : listFile) {
-                if (file.isDirectory()) {
-                    getFile(file);
-                }
-                else {
-                    if (file.getName().endsWith(".png")
-                            || file.getName().endsWith(".jpg")
-                            || file.getName().endsWith(".jpeg")
-                            || file.getName().endsWith(".gif")
-                            || file.getName().endsWith(".bmp")
-                            || file.getName().endsWith(".webp")
-                    )
-                    {
-                        String temp = file.getPath();
-                        if (!fileList.contains(temp))
-                            fileList.add(temp);
+            for (int i = 0; i < listFile.length; i++) {
+
+                if (listFile[i].isDirectory()) {
+                    getFile(listFile[i]);
+                } else {
+                    if (listFile[i].getName().endsWith(".png")
+                            || listFile[i].getName().endsWith(".jpg")
+                            || listFile[i].getName().endsWith(".jpeg")
+                            || listFile[i].getName().endsWith(".gif")
+                            || listFile[i].getName().endsWith(".bmp")) {
+                        String temp = listFile[i].getPath();
+                        if (!allImages.contains(temp)) {
+                            File file = new File(temp);
+                            Date lastModifiedDate = new Date(file.lastModified());
+                            String format = "MM-dd-yyyy HH:mm:ss";
+                            SimpleDateFormat formatter = new SimpleDateFormat(format, Locale.ENGLISH);
+                            String dt = formatter.format(new Date(String.valueOf(lastModifiedDate)));
+                            ;
+                            allImages.add(new ImageDataModel(temp, dt));
+
+                        }
+
                     }
                 }
             }
         }
-        return fileList;
     }
+
+//    public ArrayList<String> getFile(File dir) {
+//        File listFile[] = dir.listFiles();
+//        if (listFile != null && listFile.length > 0) {
+//            for (File file : listFile) {
+//                if (file.isDirectory()) {
+//                    getFile(file);
+//                }
+//                else {
+//                    if (file.getName().endsWith(".png")
+//                            || file.getName().endsWith(".jpg")
+//                            || file.getName().endsWith(".jpeg")
+//                            || file.getName().endsWith(".gif")
+//                            || file.getName().endsWith(".bmp")
+//                            || file.getName().endsWith(".webp")
+//                    )
+//                    {
+//                        String temp = file.getPath();
+//                        if (!fileList.contains(temp))
+//                            fileList.add(temp);
+//                    }
+//                }
+//            }
+//        }
+//        return fileList;
+//    }
 }
